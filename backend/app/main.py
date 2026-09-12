@@ -82,6 +82,19 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class NoEdgeCacheMiddleware(BaseHTTPMiddleware):
+    """Evita que Cloudflare (u otros proxies/navegadores) cacheen agresivamente
+    el frontend estático, para que los despliegues se reflejen de inmediato
+    sin depender de purgar el caché manualmente."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if not request.url.path.startswith(("/api/", "/ws/")):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return response
+
+
+app.add_middleware(NoEdgeCacheMiddleware)
 app.add_middleware(AccessLogMiddleware)
 
 
