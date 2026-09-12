@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+# Automatización de ejemplo: avisa cuando la Raspberry Pi deja de responder
+# (requiere haber configurado antes homeassistant/configuration_snippet.yaml,
+# en particular el binary_sensor "rpi_online").
+#
+# Esto va normalmente en Configuración → Automatizaciones → editar en YAML,
+# o pegado dentro de tu automations.yaml.
+# ---------------------------------------------------------------------------
+
+- alias: "Aviso: Raspberry Pi sin respuesta"
+  description: "Notifica si el monitor de la Raspberry Pi lleva 5 minutos sin responder"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.rpi_online
+      to: "off"
+      for:
+        minutes: 5
+  action:
+    - service: notify.notify   # reemplaza por tu servicio de notificación (ej. notify.mobile_app_tu_celular)
+      data:
+        title: "⚠️ Raspberry Pi sin respuesta"
+        message: "El monitor no responde hace más de 5 minutos. Revisa la Pi, la red o el túnel de Cloudflare."
+
+- alias: "Aviso: Raspberry Pi de vuelta en línea"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.rpi_online
+      to: "on"
+  condition:
+    # Evita el aviso de "volvió" en el arranque de Home Assistant.
+    - condition: template
+      value_template: "{{ trigger.from_state is not none }}"
+  action:
+    - service: notify.notify
+      data:
+        title: "✅ Raspberry Pi de vuelta"
+        message: "El monitor volvió a responder con normalidad."

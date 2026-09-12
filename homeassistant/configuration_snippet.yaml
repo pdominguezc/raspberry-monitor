@@ -21,7 +21,7 @@ sensor:
   - platform: rest
     name: "Raspberry Pi Metrics"
     unique_id: raspberry_pi_metrics_raw
-    resource: "https://rpi.tu-dominio.com/api/metrics"
+    resource: "https://rpi.pablodominguez.cl/api/metrics"
     method: GET
     headers:
       Authorization: !secret raspberry_monitor_token
@@ -42,7 +42,7 @@ sensor:
   - platform: rest
     name: "Raspberry Pi Access Stats"
     unique_id: raspberry_pi_access_stats
-    resource: "https://rpi.tu-dominio.com/api/access/stats"
+    resource: "https://rpi.pablodominguez.cl/api/access/stats"
     method: GET
     headers:
       Authorization: !secret raspberry_monitor_token
@@ -91,10 +91,19 @@ template:
         unique_id: rpi_access_7d
         state: "{{ state_attr('sensor.raspberry_pi_access_stats', 'last_7_days') }}"
 
-# Sensor binario opcional para alertar si la Pi se calienta demasiado.
+# Sensores binarios: uno indica si la Pi está en línea (ideal para saber si
+# "está operativa"), el otro alerta si se está calentando demasiado.
 binary_sensor:
   - platform: template
     sensors:
+      rpi_online:
+        friendly_name: "RPi Monitor en línea"
+        device_class: connectivity
+        # El sensor REST pasa a "unavailable"/"unknown" si no logra contactar
+        # la API (Pi apagada, caída de red, túnel de Cloudflare caído, etc.).
+        value_template: >
+          {{ states('sensor.raspberry_pi_metrics') not in ['unavailable', 'unknown', 'none', ''] }}
+
       rpi_overheating:
         friendly_name: "RPi sobrecalentada"
         device_class: heat
