@@ -1,0 +1,23 @@
+[Unit]
+Description=Raspberry Pi Monitor - API de métricas del sistema
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Ajusta el usuario y la ruta si tu instalación queda en otro lugar.
+User=pi
+WorkingDirectory=/home/pi/raspberry-monitor/backend
+Environment=PATH=/home/pi/raspberry-monitor/backend/venv/bin
+ExecStart=/home/pi/raspberry-monitor/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+# Endurecimiento básico
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/pi/raspberry-monitor/backend/data
+
+[Install]
+WantedBy=multi-user.target

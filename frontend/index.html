@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Raspberry Pi Monitor</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/icon.svg" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>🍓 Raspberry Pi Monitor</h1>
+    <div class="status">
+      <span id="conn-dot" class="dot dot-off"></span>
+      <span id="conn-text">Conectando…</span>
+    </div>
+  </header>
+
+  <main id="app">
+    <section id="login" class="card login-card hidden">
+      <h2>Acceso requerido</h2>
+      <p>Ingresa el token de la API (se guarda solo en este dispositivo).</p>
+      <form id="login-form">
+        <input id="token-input" type="password" placeholder="Token" autocomplete="off" required />
+        <button type="submit">Entrar</button>
+      </form>
+      <p id="login-error" class="error hidden"></p>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="grid">
+        <div class="card metric-card">
+          <h3>CPU</h3>
+          <div class="big-value" id="cpu-percent">--%</div>
+          <div class="sub" id="cpu-load">carga: -- / -- / --</div>
+          <canvas id="cpu-chart" height="80"></canvas>
+        </div>
+
+        <div class="card metric-card">
+          <h3>Memoria</h3>
+          <div class="big-value" id="mem-percent">--%</div>
+          <div class="sub" id="mem-detail">-- / -- usados</div>
+          <canvas id="mem-chart" height="80"></canvas>
+        </div>
+
+        <div class="card metric-card">
+          <h3>Temperatura</h3>
+          <div class="big-value" id="temp-value">--°C</div>
+          <div class="sub" id="temp-status">--</div>
+          <canvas id="temp-chart" height="80"></canvas>
+        </div>
+
+        <div class="card metric-card">
+          <h3>Uptime</h3>
+          <div class="big-value" id="uptime-value">--</div>
+          <div class="sub" id="boot-time">--</div>
+        </div>
+
+        <div class="card metric-card wide">
+          <h3>Disco</h3>
+          <div id="disk-list" class="disk-list"></div>
+        </div>
+
+        <div class="card metric-card wide">
+          <h3>Red</h3>
+          <div id="net-list" class="net-list"></div>
+        </div>
+
+        <div class="card metric-card wide">
+          <h3>Accesos al sitio</h3>
+          <div class="access-summary">
+            <div><span id="access-today">--</span><label>hoy</label></div>
+            <div><span id="access-week">--</span><label>7 días</label></div>
+            <div><span id="access-total">--</span><label>total</label></div>
+            <div><span id="access-ips">--</span><label>IPs únicas (7d)</label></div>
+          </div>
+          <table class="access-table">
+            <thead><tr><th>Hora</th><th>Método</th><th>Ruta</th><th>IP</th><th>Estado</th></tr></thead>
+            <tbody id="access-recent"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/service-worker.js").catch(console.error);
+      });
+    }
+  </script>
+</body>
+</html>

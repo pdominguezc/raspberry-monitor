@@ -1,0 +1,20 @@
+# Copia este archivo a /etc/cloudflared/config.yml en la Raspberry Pi (o a
+# ~/.cloudflared/config.yml) y reemplaza los valores marcados.
+#
+# Requiere que ya hayas creado el túnel con:
+#   cloudflared tunnel login
+#   cloudflared tunnel create raspberry-monitor
+# (esto genera <TUNNEL_ID>.json en ~/.cloudflared/)
+
+tunnel: <TUNNEL_ID>
+credentials-file: /home/pi/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  # Dominio público que apuntará al dashboard/API de la Raspberry Pi.
+  - hostname: rpi.tu-dominio.com
+    service: http://localhost:8000
+    originRequest:
+      noTLSVerify: true
+
+  # Regla final obligatoria: cualquier otra petición se rechaza.
+  - service: http_status:404

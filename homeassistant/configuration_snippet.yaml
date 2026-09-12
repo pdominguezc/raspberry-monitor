@@ -1,0 +1,101 @@
+# ---------------------------------------------------------------------------
+# Integración de Raspberry Pi Monitor en Home Assistant vía REST.
+#
+# Se eligió el sensor "rest" (polling HTTP) en vez de MQTT porque NO requiere
+# instalar ni mantener un broker (Mosquitto) corriendo en la Raspberry, lo que
+# consume menos RAM/CPU. Se hace UNA sola petición HTTP por ciclo que trae
+# todas las métricas (json_attributes), y sensores "template" derivan los
+# valores individuales de esos atributos sin generar tráfico extra.
+#
+# Si ya tienes un broker MQTT corriendo para otros dispositivos, avísame y
+# armamos la variante con autodiscovery MQTT (aún más liviana en ese caso).
+# ---------------------------------------------------------------------------
+
+# 1) Agrega el token en secrets.yaml:
+#    raspberry_monitor_token: "el-mismo-valor-de-API_TOKEN-en-.env"
+#
+# 2) Ajusta la URL al hostname que expongas con Cloudflare Tunnel
+#    (o a la IP local de la Pi si Home Assistant vive en la misma red).
+
+sensor:
+  - platform: rest
+    name: "Raspberry Pi Metrics"
+    unique_id: raspberry_pi_metrics_raw
+    resource: "https://rpi.tu-dominio.com/api/metrics"
+    method: GET
+    headers:
+      Authorization: !secret raspberry_monitor_token
+    scan_interval: 30
+    timeout: 10
+    value_template: "{{ value_json.cpu.percent }}"
+    unit_of_measurement: "%"
+    json_attributes:
+      - cpu
+      - memory
+      - swap
+      - disks
+      - network
+      - temperature_c
+      - uptime_seconds
+      - boot_time
+
+  - platform: rest
+    name: "Raspberry Pi Access Stats"
+    unique_id: raspberry_pi_access_stats
+    resource: "https://rpi.tu-dominio.com/api/access/stats"
+    method: GET
+    headers:
+      Authorization: !secret raspberry_monitor_token
+    scan_interval: 300
+    timeout: 10
+    value_template: "{{ value_json.today }}"
+    json_attributes:
+      - today
+      - last_7_days
+      - total
+      - unique_ips_last_7_days
+
+template:
+  - sensor:
+      - name: "RPi Memoria %"
+        unique_id: rpi_memory_percent
+        unit_of_measurement: "%"
+        device_class: null
+        state: "{{ state_attr('sensor.raspberry_pi_metrics', 'memory')['percent'] }}"
+
+      - name: "RPi Temperatura CPU"
+        unique_id: rpi_cpu_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: "{{ state_attr('sensor.raspberry_pi_metrics', 'temperature_c') }}"
+
+      - name: "RPi Disco raíz %"
+        unique_id: rpi_disk_root_percent
+        unit_of_measurement: "%"
+        state: >
+          {% set disks = state_attr('sensor.raspberry_pi_metrics', 'disks') %}
+          {{ (disks | selectattr('mountpoint', 'eq', '/') | first).percent
+             if disks else None }}
+
+      - name: "RPi Uptime"
+        unique_id: rpi_uptime_hours
+        unit_of_measurement: "h"
+        state: >
+          {{ (state_attr('sensor.raspberry_pi_metrics', 'uptime_seconds') | float(0) / 3600) | round(1) }}
+
+      - name: "RPi Accesos hoy"
+        unique_id: rpi_access_today
+        state: "{{ state_attr('sensor.raspberry_pi_access_stats', 'today') }}"
+
+      - name: "RPi Accesos 7 días"
+        unique_id: rpi_access_7d
+        state: "{{ state_attr('sensor.raspberry_pi_access_stats', 'last_7_days') }}"
+
+# Sensor binario opcional para alertar si la Pi se calienta demasiado.
+binary_sensor:
+  - platform: template
+    sensors:
+      rpi_overheating:
+        friendly_name: "RPi sobrecalentada"
+        device_class: heat
+        value_template: "{{ states('sensor.rpi_temperatura_cpu') | float(0) >= 75 }}"
