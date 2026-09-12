@@ -16,7 +16,7 @@
       for:
         minutes: 5
   action:
-    - service: notify.notify   # reemplaza por tu servicio de notificación (ej. notify.mobile_app_tu_celular)
+    - service: notify.mobile_app_pixel_8_pro
       data:
         title: "⚠️ Raspberry Pi sin respuesta"
         message: "El monitor no responde hace más de 5 minutos. Revisa la Pi, la red o el túnel de Cloudflare."
@@ -31,7 +31,7 @@
     - condition: template
       value_template: "{{ trigger.from_state is not none }}"
   action:
-    - service: notify.notify
+    - service: notify.mobile_app_pixel_8_pro
       data:
         title: "✅ Raspberry Pi de vuelta"
         message: "El monitor volvió a responder con normalidad."
