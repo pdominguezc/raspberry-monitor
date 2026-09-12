@@ -41,7 +41,9 @@ function barClass(percent) {
   return "";
 }
 
-function makeLineChart(ctx, label, color) {
+const AXIS_TITLE_STYLE = { display: true, color: "#93a3bd", font: { size: 11 } };
+
+function makeLineChart(ctx, label, color, unit, yMax) {
   return new Chart(ctx, {
     type: "line",
     data: {
@@ -64,15 +66,26 @@ function makeLineChart(ctx, label, color) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { display: false },
-        y: { min: 0, max: 100, ticks: { color: "#93a3bd" }, grid: { color: "#22304a" } },
+        x: {
+          display: true,
+          title: { ...AXIS_TITLE_STYLE, text: "Hora" },
+          ticks: { color: "#93a3bd", maxTicksLimit: 6 },
+          grid: { display: false },
+        },
+        y: {
+          min: 0,
+          max: yMax,
+          title: { ...AXIS_TITLE_STYLE, text: unit },
+          ticks: { color: "#93a3bd" },
+          grid: { color: "#22304a" },
+        },
       },
       plugins: { legend: { display: false } },
     },
   });
 }
 
-function makeBarChart(ctx, label, color) {
+function makeBarChart(ctx, label, color, unit) {
   return new Chart(ctx, {
     type: "bar",
     data: {
@@ -91,8 +104,17 @@ function makeBarChart(ctx, label, color) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { ticks: { color: "#93a3bd" }, grid: { display: false } },
-        y: { beginAtZero: true, ticks: { color: "#93a3bd", precision: 0 }, grid: { color: "#22304a" } },
+        x: {
+          title: { ...AXIS_TITLE_STYLE, text: "Día" },
+          ticks: { color: "#93a3bd" },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          title: { ...AXIS_TITLE_STYLE, text: unit },
+          ticks: { color: "#93a3bd", precision: 0 },
+          grid: { color: "#22304a" },
+        },
       },
       plugins: { legend: { display: false } },
     },
@@ -109,10 +131,10 @@ function pushPoint(chart, label, value) {
   chart.update("none");
 }
 
-const cpuChart = makeLineChart($("cpu-chart"), "CPU %", "#22c55e");
-const memChart = makeLineChart($("mem-chart"), "Memoria %", "#3b82f6");
-const tempChart = makeLineChart($("temp-chart"), "Temp °C", "#f59e0b");
-const accessChart = makeBarChart($("access-chart"), "Accesos", "#a855f7");
+const cpuChart = makeLineChart($("cpu-chart"), "CPU %", "#22c55e", "%", 100);
+const memChart = makeLineChart($("mem-chart"), "Memoria %", "#3b82f6", "%", 100);
+const tempChart = makeLineChart($("temp-chart"), "Temp °C", "#f59e0b", "°C", undefined);
+const accessChart = makeBarChart($("access-chart"), "Accesos", "#a855f7", "N° de accesos");
 
 function renderSnapshot(data) {
   const time = new Date(data.timestamp).toLocaleTimeString();
