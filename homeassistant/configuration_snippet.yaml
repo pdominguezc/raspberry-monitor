@@ -91,20 +91,21 @@ template:
         unique_id: rpi_access_7d
         state: "{{ state_attr('sensor.raspberry_pi_access_stats', 'last_7_days') }}"
 
-# Sensores binarios: uno indica si la Pi está en línea (ideal para saber si
-# "está operativa"), el otro alerta si se está calentando demasiado.
-binary_sensor:
-  - platform: template
-    sensors:
-      rpi_online:
-        friendly_name: "RPi Monitor en línea"
+  # Sensores binarios: uno indica si la Pi está en línea (ideal para saber si
+  # "está operativa"), el otro alerta si se está calentando demasiado.
+  # NOTA: en versiones recientes de Home Assistant, los binary_sensor de tipo
+  # "template" van dentro de esta misma clave "template:" (no en una clave
+  # "binary_sensor:" aparte con "platform: template", que quedó obsoleta).
+  - binary_sensor:
+      - name: "RPi Monitor en línea"
+        unique_id: rpi_online
         device_class: connectivity
         # El sensor REST pasa a "unavailable"/"unknown" si no logra contactar
         # la API (Pi apagada, caída de red, túnel de Cloudflare caído, etc.).
-        value_template: >
+        state: >
           {{ states('sensor.raspberry_pi_metrics') not in ['unavailable', 'unknown', 'none', ''] }}
 
-      rpi_overheating:
-        friendly_name: "RPi sobrecalentada"
+      - name: "RPi sobrecalentada"
+        unique_id: rpi_overheating
         device_class: heat
-        value_template: "{{ states('sensor.rpi_temperatura_cpu') | float(0) >= 75 }}"
+        state: "{{ states('sensor.rpi_temperatura_cpu') | float(0) >= 75 }}"
