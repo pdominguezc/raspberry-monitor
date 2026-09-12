@@ -7,12 +7,12 @@
 # (esto genera <TUNNEL_ID>.json en ~/.cloudflared/)
 
 tunnel: <TUNNEL_ID>
-credentials-file: /home/pi/.cloudflared/<TUNNEL_ID>.json
+credentials-file: /home/pdominguezc/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
   # Dominio público que apuntará al dashboard/API de la Raspberry Pi.
   - hostname: rpi.tu-dominio.com
-    service: http://localhost:8000
+    service: http://localhost:8001
     originRequest:
       noTLSVerify: true
 

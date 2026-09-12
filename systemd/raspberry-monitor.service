@@ -5,11 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# Ajusta el usuario y la ruta si tu instalación queda en otro lugar.
-User=pi
-WorkingDirectory=/home/pi/raspberry-monitor/backend
-Environment=PATH=/home/pi/raspberry-monitor/backend/venv/bin
-ExecStart=/home/pi/raspberry-monitor/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+User=pdominguezc
+WorkingDirectory=/home/pdominguezc/raspberry-monitor/backend
+Environment=PATH=/home/pdominguezc/raspberry-monitor/backend/venv/bin
+ExecStart=/home/pdominguezc/raspberry-monitor/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8001
 Restart=on-failure
 RestartSec=5
 
@@ -17,7 +16,7 @@ RestartSec=5
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/home/pi/raspberry-monitor/backend/data
+ReadWritePaths=/home/pdominguezc/raspberry-monitor/backend/data
 
 [Install]
 WantedBy=multi-user.target
