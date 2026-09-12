@@ -55,15 +55,44 @@ function makeLineChart(ctx, label, color) {
           fill: true,
           tension: 0.3,
           pointRadius: 0,
+          borderWidth: 2,
         },
       ],
     },
     options: {
       animation: false,
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
         x: { display: false },
         y: { min: 0, max: 100, ticks: { color: "#93a3bd" }, grid: { color: "#22304a" } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+function makeBarChart(ctx, label, color) {
+  return new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label,
+          data: [],
+          backgroundColor: color,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: "#93a3bd" }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { color: "#93a3bd", precision: 0 }, grid: { color: "#22304a" } },
       },
       plugins: { legend: { display: false } },
     },
@@ -83,6 +112,7 @@ function pushPoint(chart, label, value) {
 const cpuChart = makeLineChart($("cpu-chart"), "CPU %", "#22c55e");
 const memChart = makeLineChart($("mem-chart"), "Memoria %", "#3b82f6");
 const tempChart = makeLineChart($("temp-chart"), "Temp °C", "#f59e0b");
+const accessChart = makeBarChart($("access-chart"), "Accesos", "#a855f7");
 
 function renderSnapshot(data) {
   const time = new Date(data.timestamp).toLocaleTimeString();
@@ -155,6 +185,12 @@ async function loadAccessStats() {
     $("access-week").textContent = stats.last_7_days;
     $("access-total").textContent = stats.total;
     $("access-ips").textContent = stats.unique_ips_last_7_days;
+
+    accessChart.data.labels = stats.daily_counts_last_14_days.map((d) =>
+      new Date(d.date + "T00:00:00").toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" })
+    );
+    accessChart.data.datasets[0].data = stats.daily_counts_last_14_days.map((d) => d.hits);
+    accessChart.update();
 
     const tbody = $("access-recent");
     tbody.innerHTML = "";

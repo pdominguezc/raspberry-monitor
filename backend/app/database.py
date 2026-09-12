@@ -126,6 +126,18 @@ def access_stats() -> dict:
         "SELECT COUNT(DISTINCT client_ip) AS c FROM access_log WHERE ts >= ?", (week_start,)
     ).fetchone()["c"]
 
+    two_weeks_start = (now - timedelta(days=14)).isoformat()
+    daily_rows = conn.execute(
+        """SELECT substr(ts, 1, 10) AS day, COUNT(*) AS hits FROM access_log
+           WHERE ts >= ? GROUP BY day ORDER BY day ASC""",
+        (two_weeks_start,),
+    ).fetchall()
+    daily_by_date = {r["day"]: r["hits"] for r in daily_rows}
+    daily_counts = []
+    for i in range(13, -1, -1):
+        day = (now - timedelta(days=i)).strftime("%Y-%m-%d")
+        daily_counts.append({"date": day, "hits": daily_by_date.get(day, 0)})
+
     return {
         "total": total,
         "today": today,
@@ -133,4 +145,5 @@ def access_stats() -> dict:
         "unique_ips_last_7_days": unique_ips_week,
         "top_paths_last_7_days": [dict(r) for r in top_paths],
         "recent": [dict(r) for r in recent],
+        "daily_counts_last_14_days": daily_counts,
     }

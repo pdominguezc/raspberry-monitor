@@ -91,6 +91,10 @@ main { padding: 16px; max-width: 1100px; margin: 0 auto; }
 
 .sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 8px; }
 
+.chart-box { position: relative; width: 100%; margin-top: 10px; }
+.chart-box-lg { height: 260px; }
+.chart-box-md { height: 200px; margin-bottom: 16px; }
+
 .disk-list, .net-list { display: flex; flex-direction: column; gap: 10px; }
 
 .disk-row, .net-row {
@@ -119,4 +123,6 @@ main { padding: 16px; max-width: 1100px; margin: 0 auto; }
 @media (max-width: 480px) {
   .big-value { font-size: 1.6rem; }
   main { padding: 10px; }
+  .chart-box-lg { height: 180px; }
+  .chart-box-md { height: 160px; }
 }

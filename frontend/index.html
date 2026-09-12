@@ -33,25 +33,25 @@
 
     <section id="dashboard" class="hidden">
       <div class="grid">
-        <div class="card metric-card">
+        <div class="card metric-card wide">
           <h3>CPU</h3>
           <div class="big-value" id="cpu-percent">--%</div>
           <div class="sub" id="cpu-load">carga: -- / -- / --</div>
-          <canvas id="cpu-chart" height="80"></canvas>
+          <div class="chart-box chart-box-lg"><canvas id="cpu-chart"></canvas></div>
         </div>
 
-        <div class="card metric-card">
+        <div class="card metric-card wide">
           <h3>Memoria</h3>
           <div class="big-value" id="mem-percent">--%</div>
           <div class="sub" id="mem-detail">-- / -- usados</div>
-          <canvas id="mem-chart" height="80"></canvas>
+          <div class="chart-box chart-box-lg"><canvas id="mem-chart"></canvas></div>
         </div>
 
-        <div class="card metric-card">
+        <div class="card metric-card wide">
           <h3>Temperatura</h3>
           <div class="big-value" id="temp-value">--°C</div>
           <div class="sub" id="temp-status">--</div>
-          <canvas id="temp-chart" height="80"></canvas>
+          <div class="chart-box chart-box-lg"><canvas id="temp-chart"></canvas></div>
         </div>
 
         <div class="card metric-card">
@@ -78,6 +78,7 @@
             <div><span id="access-total">--</span><label>total</label></div>
             <div><span id="access-ips">--</span><label>IPs únicas (7d)</label></div>
           </div>
+          <div class="chart-box chart-box-md"><canvas id="access-chart"></canvas></div>
           <table class="access-table">
             <thead><tr><th>Hora</th><th>Método</th><th>Ruta</th><th>IP</th><th>Estado</th></tr></thead>
             <tbody id="access-recent"></tbody>
