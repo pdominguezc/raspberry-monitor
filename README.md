@@ -100,6 +100,27 @@ adelante quieres autodiscovery vía MQTT (por ejemplo porque ya tienes un
 broker corriendo para otros dispositivos), se puede agregar sin tocar el
 backend.
 
+## 6. Alertas por correo cuando una métrica se dispara
+
+Opcional. En `backend/.env`, define `ALERT_EMAIL_TO` (a quién avisar) y al menos
+uno de `ALERT_CPU_PERCENT` / `ALERT_MEMORY_PERCENT` / `ALERT_DISK_PERCENT` /
+`ALERT_TEMPERATURE_C` (el umbral de esa métrica), más las credenciales SMTP
+(`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, etc. — ver `.env.example` para el
+detalle, funciona igual que el correo de mi-webpage, puedes usar las mismas
+credenciales de Gmail si quieres).
+
+Cada vez que se muestrean las métricas (cada `SAMPLE_INTERVAL_SECONDS`), se
+revisan contra esos umbrales:
+- Si una métrica los supera, se manda un correo — pero no se repite mientras
+  siga alta, solo cada `ALERT_COOLDOWN_MINUTES` (30 por defecto), para no
+  inundarte la bandeja.
+- Cuando vuelve a estar bajo el umbral, manda un correo avisando que se
+  normalizó.
+
+Si dejas un umbral vacío, esa métrica simplemente no se revisa. Si
+`ALERT_EMAIL_TO` está vacío, no se manda ningún correo — el monitoreo sigue
+funcionando igual.
+
 ## API
 
 Todas las rutas (excepto `/api/health`) requieren el header

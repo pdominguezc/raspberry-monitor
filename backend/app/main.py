@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from . import config, database, metrics
+from . import alerts, config, database, metrics
 from .auth import verify_token
 
 logger = logging.getLogger("raspberry_monitor")
@@ -24,6 +24,7 @@ async def _sampler_loop() -> None:
         try:
             snapshot = metrics.collect_snapshot()
             database.insert_sample(snapshot)
+            alerts.check_thresholds(snapshot)
             dead = set()
             for ws in _ws_clients:
                 try:
