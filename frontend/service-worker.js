@@ -1,4 +1,4 @@
-const CACHE_NAME = "rpi-monitor-shell-v1";
+const CACHE_NAME = "rpi-monitor-shell-v2";
 const SHELL_FILES = [
   "/",
   "/index.html",
