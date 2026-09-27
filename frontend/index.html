@@ -71,6 +71,25 @@
         </div>
 
         <div class="card metric-card wide">
+          <h3>Alertas por correo</h3>
+          <p class="sub">Te avisa por correo cuando una métrica supera el umbral que definas acá. Deja un campo vacío para no alertar por esa métrica.</p>
+          <form id="alerts-form" class="alerts-form">
+            <label>Correo destino
+              <input id="alert-email" type="email" placeholder="tu-correo@gmail.com" />
+            </label>
+            <div class="alerts-grid">
+              <label>CPU (%)<input id="alert-cpu" type="number" min="1" max="100" step="1" /></label>
+              <label>Memoria (%)<input id="alert-mem" type="number" min="1" max="100" step="1" /></label>
+              <label>Disco (%)<input id="alert-disk" type="number" min="1" max="100" step="1" /></label>
+              <label>Temperatura (°C)<input id="alert-temp" type="number" min="1" max="100" step="1" /></label>
+              <label>Espera entre avisos (min)<input id="alert-cooldown" type="number" min="1" step="1" /></label>
+            </div>
+            <button type="submit">Guardar</button>
+            <span id="alerts-status" class="sub"></span>
+          </form>
+        </div>
+
+        <div class="card metric-card wide">
           <h3>Accesos al sitio</h3>
           <div class="access-summary">
             <div><span id="access-today">--</span><label>hoy</label></div>

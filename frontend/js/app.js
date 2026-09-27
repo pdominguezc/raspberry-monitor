@@ -200,6 +200,60 @@ async function authedFetch(path) {
   return res.json();
 }
 
+async function authedPut(path, body) {
+  const res = await fetch(path, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`http ${res.status}`);
+  return res.json();
+}
+
+function fillAlertsForm(settings) {
+  $("alert-email").value = settings.email_to ?? "";
+  $("alert-cpu").value = settings.cpu_percent ?? "";
+  $("alert-mem").value = settings.memory_percent ?? "";
+  $("alert-disk").value = settings.disk_percent ?? "";
+  $("alert-temp").value = settings.temperature_c ?? "";
+  $("alert-cooldown").value = settings.cooldown_minutes ?? "";
+}
+
+async function loadAlertSettings() {
+  try {
+    fillAlertsForm(await authedFetch("/api/alerts/settings"));
+  } catch (e) {
+    console.error("Error cargando configuración de alertas", e);
+  }
+}
+
+function numOrNull(value) {
+  return value === "" ? null : Number(value);
+}
+
+$("alerts-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const status = $("alerts-status");
+  status.textContent = "Guardando…";
+  try {
+    const saved = await authedPut("/api/alerts/settings", {
+      email_to: $("alert-email").value.trim() || null,
+      cpu_percent: numOrNull($("alert-cpu").value),
+      memory_percent: numOrNull($("alert-mem").value),
+      disk_percent: numOrNull($("alert-disk").value),
+      temperature_c: numOrNull($("alert-temp").value),
+      cooldown_minutes: numOrNull($("alert-cooldown").value),
+    });
+    fillAlertsForm(saved);
+    status.textContent = "Guardado ✓";
+    setTimeout(() => (status.textContent = ""), 3000);
+  } catch (e) {
+    status.textContent = "Error al guardar";
+    console.error(e);
+  }
+});
+
 async function loadAccessStats() {
   try {
     const stats = await authedFetch("/api/access/stats");
@@ -283,6 +337,7 @@ async function boot() {
     showDashboard();
     connectWebSocket();
     loadAccessStats();
+    loadAlertSettings();
     setInterval(loadAccessStats, 30000);
   } catch (e) {
     showLogin("Token inválido o expirado.");

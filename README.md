@@ -102,12 +102,18 @@ backend.
 
 ## 6. Alertas por correo cuando una métrica se dispara
 
-Opcional. En `backend/.env`, define `ALERT_EMAIL_TO` (a quién avisar) y al menos
-uno de `ALERT_CPU_PERCENT` / `ALERT_MEMORY_PERCENT` / `ALERT_DISK_PERCENT` /
-`ALERT_TEMPERATURE_C` (el umbral de esa métrica), más las credenciales SMTP
-(`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, etc. — ver `.env.example` para el
-detalle, funciona igual que el correo de mi-webpage, puedes usar las mismas
-credenciales de Gmail si quieres).
+Opcional. Las credenciales SMTP (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`,
+etc. — ver `.env.example` para el detalle, funciona igual que el correo de
+mi-webpage, puedes usar las mismas credenciales de Gmail si quieres) se
+configuran una sola vez en `backend/.env`.
+
+Los **umbrales y el correo destino sí se pueden cambiar sin tocar la Pi por
+SSH**: en el dashboard (`https://rpi.pablodominguez.cl/`), la tarjeta
+"Alertas por correo" te deja definir el correo destino y el umbral de
+CPU/memoria/disco/temperatura directamente desde el navegador — se guardan
+al toque en la base de datos y se aplican de inmediato, sin reiniciar nada.
+Los valores de `ALERT_CPU_PERCENT`/etc. en `.env` solo sirven como punto de
+partida la primera vez, antes de guardar algo desde el dashboard.
 
 Cada vez que se muestrean las métricas (cada `SAMPLE_INTERVAL_SECONDS`), se
 revisan contra esos umbrales:

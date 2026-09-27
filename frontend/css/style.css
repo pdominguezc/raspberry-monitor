@@ -92,6 +92,42 @@ main { padding: 16px; max-width: 1100px; margin: 0 auto; }
 .sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 8px; }
 
 .chart-box { position: relative; width: 100%; margin-top: 10px; }
+
+.alerts-form { display: flex; flex-direction: column; gap: 10px; }
+
+.alerts-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.alerts-form input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0e1626;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.alerts-form button {
+  align-self: flex-start;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #06210f;
+  font-weight: 600;
+  cursor: pointer;
+}
 .chart-box-lg { height: 260px; }
 .chart-box-md { height: 200px; margin-bottom: 16px; }
 

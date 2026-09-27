@@ -16,7 +16,7 @@ import smtplib
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 
-from . import config
+from . import config, database
 
 logger = logging.getLogger("raspberry_monitor")
 
@@ -26,13 +26,28 @@ _last_alert_at: dict[str, datetime] = {}
 _active_alerts: set[str] = set()
 
 
-def _send_email(subject: str, body: str) -> None:
-    if not config.ALERT_EMAIL_TO or not config.SMTP_HOST or not config.SMTP_USER:
+def get_effective_settings() -> dict:
+    """Los umbrales configurados desde el dashboard (guardados en SQLite)
+    tienen prioridad; cualquier campo que no se haya guardado ahí todavía
+    usa el valor del .env como default inicial."""
+    saved = database.get_alert_settings() or {}
+    return {
+        "email_to": saved.get("email_to") or config.ALERT_EMAIL_TO or None,
+        "cpu_percent": saved.get("cpu_percent") if saved.get("cpu_percent") is not None else config.ALERT_CPU_PERCENT,
+        "memory_percent": saved.get("memory_percent") if saved.get("memory_percent") is not None else config.ALERT_MEMORY_PERCENT,
+        "disk_percent": saved.get("disk_percent") if saved.get("disk_percent") is not None else config.ALERT_DISK_PERCENT,
+        "temperature_c": saved.get("temperature_c") if saved.get("temperature_c") is not None else config.ALERT_TEMPERATURE_C,
+        "cooldown_minutes": saved.get("cooldown_minutes") if saved.get("cooldown_minutes") is not None else config.ALERT_COOLDOWN_MINUTES,
+    }
+
+
+def _send_email(subject: str, body: str, email_to: str) -> None:
+    if not email_to or not config.SMTP_HOST or not config.SMTP_USER:
         return
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = config.SMTP_FROM
-    msg["To"] = config.ALERT_EMAIL_TO
+    msg["To"] = email_to
     msg.set_content(body)
     try:
         with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=10) as server:
@@ -44,7 +59,10 @@ def _send_email(subject: str, body: str) -> None:
         logger.exception("No se pudo enviar el correo de alerta")
 
 
-def _check_one(key: str, label: str, value: float | None, threshold: float | None, unit: str = "%") -> None:
+def _check_one(
+    key: str, label: str, value: float | None, threshold: float | None,
+    email_to: str, cooldown_minutes: float, unit: str = "%",
+) -> None:
     if value is None or threshold is None:
         return
 
@@ -53,12 +71,13 @@ def _check_one(key: str, label: str, value: float | None, threshold: float | Non
 
     if over_threshold:
         last = _last_alert_at.get(key)
-        due = last is None or (now - last) >= timedelta(minutes=config.ALERT_COOLDOWN_MINUTES)
+        due = last is None or (now - last) >= timedelta(minutes=cooldown_minutes)
         if due:
             _send_email(
                 f"⚠️ Raspberry Pi: {label} alto ({value:.1f}{unit})",
                 f"{label} está en {value:.1f}{unit}, por sobre el umbral configurado de {threshold:.1f}{unit}.\n\n"
                 f"Revisa el dashboard en https://rpi.pablodominguez.cl/",
+                email_to,
             )
             _last_alert_at[key] = now
             _active_alerts.add(key)
@@ -66,6 +85,7 @@ def _check_one(key: str, label: str, value: float | None, threshold: float | Non
         _send_email(
             f"✅ Raspberry Pi: {label} volvió a la normalidad ({value:.1f}{unit})",
             f"{label} bajó a {value:.1f}{unit}, ya por debajo del umbral de {threshold:.1f}{unit}.",
+            email_to,
         )
         _active_alerts.discard(key)
         _last_alert_at.pop(key, None)
@@ -73,19 +93,25 @@ def _check_one(key: str, label: str, value: float | None, threshold: float | Non
 
 def check_thresholds(snapshot: dict) -> None:
     """Revisa el snapshot recién muestreado contra los umbrales configurados
-    (ver .env: ALERT_CPU_PERCENT, ALERT_MEMORY_PERCENT, ALERT_DISK_PERCENT,
-    ALERT_TEMPERATURE_C) y manda un correo si corresponde. Sin umbral
-    configurado para una métrica, esa métrica simplemente no se revisa."""
+    (desde el dashboard si se guardaron ahí, si no desde el .env) y manda un
+    correo si corresponde. Sin umbral configurado para una métrica, esa
+    métrica simplemente no se revisa."""
     try:
-        _check_one("cpu", "Uso de CPU", snapshot["cpu"]["percent"], config.ALERT_CPU_PERCENT)
-        _check_one("memory", "Uso de memoria", snapshot["memory"]["percent"], config.ALERT_MEMORY_PERCENT)
-        _check_one("temperature", "Temperatura", snapshot["temperature_c"], config.ALERT_TEMPERATURE_C, unit="°C")
+        settings = get_effective_settings()
+        email_to = settings["email_to"]
+        cooldown = settings["cooldown_minutes"]
+
+        _check_one("cpu", "Uso de CPU", snapshot["cpu"]["percent"], settings["cpu_percent"], email_to, cooldown)
+        _check_one("memory", "Uso de memoria", snapshot["memory"]["percent"], settings["memory_percent"], email_to, cooldown)
+        _check_one("temperature", "Temperatura", snapshot["temperature_c"], settings["temperature_c"], email_to, cooldown, unit="°C")
         for disk in snapshot["disks"]:
             _check_one(
                 f"disk:{disk['mountpoint']}",
                 f"Uso de disco ({disk['mountpoint']})",
                 disk["percent"],
-                config.ALERT_DISK_PERCENT,
+                settings["disk_percent"],
+                email_to,
+                cooldown,
             )
     except Exception:
         logger.exception("Error revisando umbrales de alerta")

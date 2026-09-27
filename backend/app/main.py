@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from . import alerts, config, database, metrics
@@ -119,6 +120,29 @@ async def get_history(minutes: int = 60):
 @app.get("/api/access/stats", dependencies=[Depends(verify_token)])
 async def get_access_stats():
     return database.access_stats()
+
+
+class AlertSettings(BaseModel):
+    email_to: str | None = None
+    cpu_percent: float | None = None
+    memory_percent: float | None = None
+    disk_percent: float | None = None
+    temperature_c: float | None = None
+    cooldown_minutes: float | None = None
+
+
+@app.get("/api/alerts/settings", dependencies=[Depends(verify_token)])
+async def get_alert_settings():
+    """Umbrales efectivos hoy: lo guardado en el dashboard, o si nunca se
+    guardó nada, lo que venga del .env (mismo criterio que usa alerts.py
+    para decidir cuándo avisar)."""
+    return alerts.get_effective_settings()
+
+
+@app.put("/api/alerts/settings", dependencies=[Depends(verify_token)])
+async def put_alert_settings(settings: AlertSettings):
+    database.save_alert_settings(settings.model_dump())
+    return alerts.get_effective_settings()
 
 
 @app.websocket("/ws/metrics")

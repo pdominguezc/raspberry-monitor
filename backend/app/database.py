@@ -36,6 +36,16 @@ def init_db() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_metric_samples_ts ON metric_samples (ts);
 
+        CREATE TABLE IF NOT EXISTS alert_settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            email_to TEXT,
+            cpu_percent REAL,
+            memory_percent REAL,
+            disk_percent REAL,
+            temperature_c REAL,
+            cooldown_minutes INTEGER
+        );
+
         CREATE TABLE IF NOT EXISTS access_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts TEXT NOT NULL,
@@ -88,6 +98,39 @@ def prune_old_samples() -> None:
     conn.execute("DELETE FROM metric_samples WHERE ts < ?", (cutoff,))
     access_cutoff = (datetime.now(timezone.utc) - timedelta(days=config.ACCESS_LOG_RETENTION_DAYS)).isoformat()
     conn.execute("DELETE FROM access_log WHERE ts < ?", (access_cutoff,))
+    conn.commit()
+
+
+def get_alert_settings() -> dict | None:
+    """Devuelve la fila guardada en la base de datos, o None si nunca se
+    guardó nada (en ese caso se usan los valores del .env, ver alerts.py)."""
+    conn = _connect()
+    row = conn.execute("SELECT * FROM alert_settings WHERE id = 1").fetchone()
+    return dict(row) if row else None
+
+
+def save_alert_settings(settings: dict) -> None:
+    """Reemplaza por completo la fila de configuración de alertas (id=1)."""
+    conn = _connect()
+    conn.execute(
+        """INSERT INTO alert_settings (id, email_to, cpu_percent, memory_percent, disk_percent, temperature_c, cooldown_minutes)
+           VALUES (1, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             email_to=excluded.email_to,
+             cpu_percent=excluded.cpu_percent,
+             memory_percent=excluded.memory_percent,
+             disk_percent=excluded.disk_percent,
+             temperature_c=excluded.temperature_c,
+             cooldown_minutes=excluded.cooldown_minutes""",
+        (
+            settings.get("email_to"),
+            settings.get("cpu_percent"),
+            settings.get("memory_percent"),
+            settings.get("disk_percent"),
+            settings.get("temperature_c"),
+            settings.get("cooldown_minutes"),
+        ),
+    )
     conn.commit()
 
 
